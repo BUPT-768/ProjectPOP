@@ -1,0 +1,10 @@
+目录说明
+./
+|_script:        存放Python脚本
+|_data_source:   存放数据源，不加入版本控制
+|_feature:       存放生成的特征
+|_model_input:   存放模型训练的输入，不加入版本控制
+|_model:         存放模型
+|_utils:         存放工具类
+|_result:        存放结果
+|_log:           存放log，不加入版本控制
