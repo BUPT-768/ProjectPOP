@@ -6,11 +6,11 @@ __author__ = 'jayvee'
 def load_csv_as_dict(csv_path):
     with open(csv_path, 'r') as fin:
         first_line = next(fin)
-        titles = first_line.replace('\n', '').split(',')
+        titles = first_line.strip().split(',')
         datas = []
         for line in fin:
             tmp_dict = {}
-            items = line.replace('\n', '').split(',')
+            items = line.strip().split(',')
             for i in xrange(len(titles)):
                 tmp_dict[titles[i]] = items[i]  # not using eval() in case of datetime data
             datas.append(tmp_dict)
