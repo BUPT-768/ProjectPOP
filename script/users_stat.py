@@ -38,8 +38,6 @@ def actions_stats(user_out_name, song_out_name):
         user_dict[user_id][date_str][action_type] += 1
         song_dict[song_id][date_str][action_type] += 1
         count += 1
-        if count >30:
-            break
         if count % 10000 == 0:
             print 'handled %s records' % count
     print 'total users:%s' % len(user_dict)
@@ -56,7 +54,7 @@ def actions_stats(user_out_name, song_out_name):
                 user_out.write('%s,%s,%s,%s,%s\n' % (user_id, date_str, acts['1'], acts['2'], acts['3']))
             count += 1
             progress = 100.0 * count / float(len(user_dict))
-            if progress % 5.0 == 0.0:
+            if progress % 5 == 0:
                 print 'users out %s done' % progress
         print 'user actions stats done.'
         song_out.write('song_id,date_str,plays,downloads,favors\n')
