@@ -1,9 +1,14 @@
 # coding=utf-8
 from collections import defaultdict
+import os
 from arrow import Arrow
+import sys
+
+project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# print project_path
+sys.path.append(project_path)
 from utils.basic_configs import PROJECT_PATH
 from utils.file_utils import load_csv_as_dict
-from utils.log_tool import model_logger
 
 __author__ = 'jayvee'
 
@@ -37,10 +42,11 @@ def user_actions_stats(fout_name):
                 fout.write('%s,%s,%s,%s,%s\n' % (user_id, date_str, acts['1'], acts['2'], acts['3']))
             count += 1
             progress = 100.0 * count / float(len(user_dict))
-            if progress % 5 == 0:
+            if progress % 5.0 == 0.0:
                 print '%s done' % progress
         print 'user actions stats done.'
 
 
 if __name__ == '__main__':
-    user_actions_stats('user_actions_stats')
+    print 'ok'
+    # user_actions_stats('user_actions_stats')
