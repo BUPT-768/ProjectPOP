@@ -31,10 +31,11 @@ def actions_stats(user_out_name, song_out_name):
     for act in actions:
         user_id = act['user_id']
         song_id = act['song_id']
-        gmt_create = eval(act['gmt_create'])
         action_type = act['action_type']
-        date_create = Arrow.fromtimestamp(gmt_create)
-        date_str = date_create.format('YYYY-MM-DD')
+        # gmt_create = eval(act['gmt_create'])
+        # date_create = Arrow.fromtimestamp(gmt_create)
+        # date_str = date_create.format('YYYY-MM-DD')
+        date_str = act['Ds']
         user_dict[user_id][date_str][action_type] += 1
         song_dict[song_id][date_str][action_type] += 1
         count += 1
@@ -66,7 +67,7 @@ def actions_stats(user_out_name, song_out_name):
                 song_out.write('%s,%s,%s,%s,%s\n' % (song_id, date_str, acts['1'], acts['2'], acts['3']))
             count += 1
             progress = 100.0 * count / float(len(song_dict))
-            if progress % 5.0 == 0.0:
+            if progress % 5 == 0:
                 print 'songs out %s done' % progress
         print 'user actions stats done.'
 
