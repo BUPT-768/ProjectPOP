@@ -17,6 +17,7 @@ from utils.log_tool import model_logger as logger
 
 data_source_dir = '%s/data_source' % (abs_father_path)
 
+
 def main():
     # 艺人维度的统计
     ## step 1 读数据
@@ -53,9 +54,7 @@ def main():
     with open('%s/feature/artist_stat_lu.csv', 'w') as fopen:
         fopen.write('艺人歌曲发行量, 平均歌曲发行周期(天), 平均初始播放数, 语言0, 语言1, 语言2, 语言3, 语言4, 语言>=5, 性别\n')
         pass
-         
     
 
 if __name__ == '__main__':
     main()
-
