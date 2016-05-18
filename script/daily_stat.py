@@ -50,7 +50,7 @@ def actions_stats(user_out_name, song_out_name):
     # 输出结果到feature文件夹中
     with open('%s/feature/%s.csv' % (PROJECT_PATH, user_out_name), 'w') as user_out, \
             open('%s/feature/%s.csv' % (PROJECT_PATH, song_out_name), 'w') as song_out:
-        user_out.write('user_id,date_str,plays,downloads,favors\n')
+        user_out.write('user_id,date_str,plays,downloads,collects\n')
         count = 0
         for user_id in user_dict.keys():
             user_act = user_dict[user_id]
@@ -62,7 +62,7 @@ def actions_stats(user_out_name, song_out_name):
             if progress % 5 == 0:
                 print 'users out %s done' % progress
         print 'user actions stats done.'
-        song_out.write('song_id,date_str,plays,downloads,favors\n')
+        song_out.write('song_id,date_str,plays,downloads,collects\n')
         count = 0
         for song_id in song_dict.keys():
             song_act = song_dict[song_id]
@@ -71,7 +71,7 @@ def actions_stats(user_out_name, song_out_name):
                 song_out.write('%s,%s,%s,%s,%s\n' % (song_id, date_str, acts['1'], acts['2'], acts['3']))
             count += 1
             progress = 100.0 * count / float(len(song_dict))
-            if progress % 5 == 0:
+            if progress % 5.0 == 0.0:
                 print 'songs out %s done' % progress
         print 'user actions stats done.'
 
@@ -94,15 +94,13 @@ def user_song_stats(user_song_out_name):
         date_str = act['Ds']
         user_song_dict[user_id][song_id][date_str][action_type] += 1
         count += 1
-        if count>10:
-            break
         if count % 10000 == 0:
             print 'handled %s records' % count
     # print 'total users:%s' % len(user_dict)
     # print 'total songs:%s' % len(song_dict)
     # 输出结果到feature文件夹中
     with open('%s/feature/%s.csv' % (PROJECT_PATH, user_song_out_name), 'w') as user_song_out:
-        user_song_out.write('user_id,song_id,date_str,plays,downloads,favors\n')
+        user_song_out.write('user_id,song_id,date_str,plays,downloads,collects\n')
         count = 0
         for user_id in user_song_dict.keys():
             for song_id in user_song_dict[user_id].keys():
@@ -111,9 +109,9 @@ def user_song_stats(user_song_out_name):
                     acts = user_act[date_str]
                     user_song_out.write(
                         '%s,%s,%s,%s,%s,%s\n' % (user_id, song_id, date_str, acts['1'], acts['2'], acts['3']))
-                count += 1
+                    count += 1
                 progress = 100.0 * count / float(len(user_song_dict))
-                if progress % 5 == 0:
+                if progress % 5.0 == 0.0:
                     print 'user-song out %s done' % progress
         print 'user-song actions stats done.'
 
