@@ -1,4 +1,5 @@
 import os
+import arrow
 
 __author__ = 'jayvee'
 
@@ -6,3 +7,13 @@ __author__ = 'jayvee'
 store some configs of the project
 """
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def timer(func):
+    def wrapper(*args, **kwargs):
+        t = arrow.utcnow()
+        res = func(*args, **kwargs)
+        print '[%s]cost time = %s' % (func.__name__, arrow.utcnow() - t)
+        return res
+
+    return wrapper
