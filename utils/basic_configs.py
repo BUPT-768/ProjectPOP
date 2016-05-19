@@ -8,6 +8,7 @@ store some configs of the project
 """
 PROJECT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+ActionMap = {'1':'play', '2':'download', '3':'collect'}
 
 def timer(func):
     def wrapper(*args, **kwargs):
@@ -17,3 +18,5 @@ def timer(func):
         return res
 
     return wrapper
+
+

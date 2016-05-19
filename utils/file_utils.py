@@ -1,7 +1,7 @@
 # coding=utf-8
-from utils.basic_configs import PROJECT_PATH
+from basic_configs import PROJECT_PATH
 
-__author__ = 'jayvee'
+__author__ = 'jayvee', 'jiaying.lu'
 
 
 def load_csv_as_dict(csv_path):
@@ -22,6 +22,24 @@ def load_csv_as_dict(csv_path):
             yield tmp_dict
 
 
+def get_song_artist_map():
+    '''
+    获得一个 song_id=>artist_id的映射
+
+    Returns:
+        song_artist_map: dict, key,value均为string
+    '''
+    song_artist_map = {}
+    with open('%s/data_source/mars_tianchi_songs.csv' % (PROJECT_PATH)) as fopen:
+        fopen.readline()
+        for line in fopen:
+            line_list = line.strip().split(',')
+            song_id, artist_id = line_list[0], line_list[1]
+            song_artist_map[song_id] = artist_id
+    return song_artist_map
+
+
+
 def test_main():
     res = load_csv_as_dict('%s/data_source/%s' % (PROJECT_PATH, 'mars_tianchi_songs.csv'))
     print len(res)
@@ -29,3 +47,4 @@ def test_main():
 
 if __name__ == '__main__':
     test_main()
+    #print(get_song_artist_map())
