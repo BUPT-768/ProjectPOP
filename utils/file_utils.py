@@ -39,7 +39,6 @@ def get_song_artist_map():
     return song_artist_map
 
 
-
 def test_main():
     res = load_csv_as_dict('%s/data_source/%s' % (PROJECT_PATH, 'mars_tianchi_songs.csv'))
     print len(res)
@@ -47,4 +46,4 @@ def test_main():
 
 if __name__ == '__main__':
     test_main()
-    #print(get_song_artist_map())
+    # print(get_song_artist_map())
