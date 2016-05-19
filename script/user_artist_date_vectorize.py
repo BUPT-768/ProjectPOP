@@ -56,9 +56,9 @@ def calc_user_artist_date_vec(user_id, artist_id, date_str, df):
     seven_u_a_plays_days = _calc_user_artist_plays_days(user_id, artist_id, date_str, df, day_offset=7)
     # --- ratio features ---
     # favor rate
-    one_u_a_play_rate = float(one_u_a_plays) / one_u_plays
-    three_u_a_play_rate = float(three_u_a_plays) / three_u_plays
-    seven_u_a_play_rate = float(seven_u_a_plays) / seven_u_plays
+    one_u_a_play_rate = float(one_u_a_plays) / max(1, one_u_plays)
+    three_u_a_play_rate = float(three_u_a_plays) / max(1, three_u_plays)
+    seven_u_a_play_rate = float(seven_u_a_plays) / max(1, seven_u_plays)
     # --- binary features ---
     is_download = _calc_is_download(user_id, artist_id, date_str, df)
     is_collect = _calc_is_collect(user_id, artist_id, date_str, df)
@@ -86,7 +86,7 @@ def _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=1):
     uid_aid_records = df[
         (df.user_id == user_id) & (df.artist_id == artist_id) &
         (df.datetime >= start_datetime) & (df.datetime < cur_datetime)]
-    uid_aid_plays = 0
+    uid_aid_plays = 0.0
     for play in uid_aid_records.plays:
         uid_aid_plays += play
     return uid_aid_plays
@@ -107,7 +107,7 @@ def _calc_user_plays(user_id, date_str, df, day_offset=1):
     uid_records = df[
         (df.user_id == user_id) &
         (df.datetime > start_datetime) & (df.datetime < cur_datetime)]
-    uid_plays = 0
+    uid_plays = 0.0
     for play in uid_records.plays:
         uid_plays += play
     return uid_plays
@@ -115,7 +115,7 @@ def _calc_user_plays(user_id, date_str, df, day_offset=1):
 
 def _calc_artist_plays(artist_id, date_str, df, day_offset=1):
     """
-    calc song-date-dayoffset plays
+    calc artist-date-dayoffset plays
     :param artist_id:
     :param date_str:
     :param df: pandas global DataFrame object
@@ -128,7 +128,7 @@ def _calc_artist_plays(artist_id, date_str, df, day_offset=1):
     aid_records = df[
         (df.artist_id == artist_id) &
         (df.datetime > start_datetime) & (df.datetime < cur_datetime)]
-    aid_plays = 0
+    aid_plays = 0.0
     for play in aid_records.plays:
         aid_plays += play
     return aid_plays
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     dframe = get_pandas_usd_obj()
     uid = '47786fe4a86082d8320ac3c07f34f7d9'
     aid = '3964ee41d4e2ade1957a9135afe1b8dc'
-    dstr = '20150730'
+    dstr = '20150803'
     print _calc_is_download(uid, aid, dstr,
                             df=dframe)
     print _calc_user_artist_plays_days(uid, aid, dstr,
@@ -201,3 +201,4 @@ if __name__ == '__main__':
     print _calc_user_artist_plays_days(uid, aid, dstr,
                                        day_offset=30, df=dframe)
     # calc_user_song_date_vec('1d1ae10bb6cd1c07ab7847b62614d144', 'f92ca5880075965aab7c0bcf59d781dc', '20150830', dframe)
+    print calc_user_artist_date_vec(uid, aid, dstr, dframe)
