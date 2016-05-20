@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-Statistics basic info
+Generate artist profile
 
 Author: lujiaying
 CreateDate: 2016/05/12
@@ -17,7 +17,7 @@ abs_father_path = os.path.dirname(abs_path)
 sys.path.append(abs_father_path)
 from utils.log_tool import feature_logger as logger
 from utils.file_utils import get_song_artist_map
-from utils.basic_configs import ActionMap
+from utils.basic_configs import ActionMap, TotalDays
 
 data_source_dir = '%s/data_source' % (abs_father_path)
 
@@ -62,6 +62,13 @@ def process_artist_songs(artist_dict={}):
             start_day_datetime = datetime.datetime.strptime(str(start_day), '%Y%m%d')
             end_day_datetime = datetime.datetime.strptime(str(end_day), '%Y%m%d')
             info_dict['avg_publish_cycle'] = (end_day_datetime - start_day_datetime).days / info_dict['song_num']
+        ### 统计歌曲语言占比
+        info_dict['l0_rate'] = info_dict['l0'] / info_dict['song_num']
+        info_dict['l1_rate'] = info_dict['l1'] / info_dict['song_num']
+        info_dict['l2_rate'] = info_dict['l2'] / info_dict['song_num']
+        info_dict['l3_rate'] = info_dict['l3'] / info_dict['song_num']
+        info_dict['l4_rate'] = info_dict['l4'] / info_dict['song_num']
+        info_dict['l5_rate'] = info_dict['l5'] / info_dict['song_num']
     return artist_dict
 
 
@@ -82,6 +89,7 @@ def process_user_actions(artist_dict):
             user_id, song_id, gmt_create, action_type, Ds = line.strip().split(',')
             artist_id = song_artist_map[song_id]
             action = ActionMap[action_type]
+            ## 分日期统计
             if not 'dates' in artist_dict[artist_id]:
                 artist_dict[artist_id]['dates'] = {}
             if not Ds in artist_dict[artist_id]['dates']:
@@ -108,15 +116,20 @@ def process_user_actions(artist_dict):
             play_song_cnt += len(date_dict['play_songs'])
             download_song_cnt += len(date_dict['download_songs'])
             collect_song_cnt += len(date_dict['collect_songs'])
+        # 绝对值特征
+        ## 交互数
         info_dict['play_pv'] = play_pv
         info_dict['download_pv'] = download_pv
         info_dict['collect_pv'] = collect_pv
+        ## 交互用户数
         info_dict['play_uv'] = play_uv
         info_dict['download_uv'] = download_uv
         info_dict['collect_uv'] = collect_uv
+        ## 交互歌曲数
         info_dict['play_song_cnt'] = play_song_cnt
         info_dict['download_song_cnt'] = download_song_cnt
         info_dict['collect_song_cnt'] = collect_song_cnt
+        ## 日均
         info_dict['play_pv_daily'] = play_pv / total_days
         info_dict['download_pv_daily'] = download_pv / total_days if total_days else 0
         info_dict['collect_pv_daily'] = collect_pv / total_days if total_days else 0
@@ -126,6 +139,13 @@ def process_user_actions(artist_dict):
         info_dict['play_song_cnt_daily'] = play_song_cnt / total_days if total_days else 0
         info_dict['download_song_cnt_daily'] = download_song_cnt / total_days if total_days else 0
         info_dict['collect_song_cnt_daily'] = collect_song_cnt / total_days if total_days else 0
+        ## 交互天数
+        info_dict['day_actioned'] = total_days
+        # 比值特征
+        info_dict['day_actioned_rate'] = total_days / TotalDays
+        info_dict['play_song_cnt_rate_daily'] = info_dict['play_song_cnt_daily'] / info_dict['song_num']
+        info_dict['download_song_cnt_rate_daily'] = info_dict['download_song_cnt_daily'] / info_dict['song_num']
+        info_dict['collect_song_cnt_rate_daily'] = info_dict['collect_song_cnt_daily'] / info_dict['song_num']
     logger.info('End process_user_actions')
 
     return artist_dict
@@ -138,9 +158,10 @@ def output(artist_dict, output_path):
         output_path: string
     '''
     logger.info('Start output')
-    col_names = ['song_num', 'avg_publish_cycle', 'avg_song_init_plays', 'l0', 'l1', 'l2', 'l3', 'l4', 'l5', 'gender',
+    col_names = ['song_num', 'avg_publish_cycle', 'avg_song_init_plays', 'l0', 'l1', 'l2', 'l3', 'l4', 'l5', 'l0_rate', 'l1_rate', 'l2_rate', 'l3_rate', 'l4_rate', 'l5_rate', 'gender',
                  'play_pv', 'download_pv', 'collect_pv', 'play_uv', 'download_uv', 'collect_uv', 'play_song_cnt', 'download_song_cnt', 'collect_song_cnt',
-                 'play_pv_daily', 'download_pv_daily', 'collect_pv_daily', 'play_uv_daily', 'download_uv_daily', 'collect_uv_daily', 'play_song_cnt_daily', 'download_song_cnt_daily', 'collect_song_cnt_daily']
+                 'play_pv_daily', 'download_pv_daily', 'collect_pv_daily', 'play_uv_daily', 'download_uv_daily', 'collect_uv_daily', 'play_song_cnt_daily', 'download_song_cnt_daily', 'collect_song_cnt_daily',
+                 'day_actioned', 'day_actioned_rate', 'play_song_cnt_rate_daily', 'download_song_cnt_rate_daily', 'collect_song_cnt_rate_daily']
     with open(output_path, 'w') as fopen:
         fopen.write(','.join(col_names) + '\n')
         for artist_id, info_dict in artist_dict.iteritems():

@@ -38,6 +38,23 @@ def get_song_artist_map():
             song_artist_map[song_id] = artist_id
     return song_artist_map
 
+def get_all_artist_id():
+    '''
+    获得一个包含全部 artist_id的set
+
+    Returns:
+        artist_set: set, set of string
+    '''
+    artist_set = set()
+    with open('%s/data_source/mars_tianchi_songs.csv' % (PROJECT_PATH)) as fopen:
+        fopen.readline()
+        for line in fopen:
+            line_list = line.strip().split(',')
+            artist_id = line_list[1]
+            if artist_id not in artist_set:
+                artist_set.add(artist_id)
+    return artist_set
+
 
 def test_main():
     res = load_csv_as_dict('%s/data_source/%s' % (PROJECT_PATH, 'mars_tianchi_songs.csv'))
