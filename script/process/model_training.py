@@ -1,14 +1,14 @@
 # coding=utf-8
 import os
 import sys
-from utils.file_utils import load_csv_as_dict
-from utils.log_tool import model_logger
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.dirname(os.path.dirname(cur_path))
 sys.path.append(project_path)
 
 from script.user_artist_date_vectorize import calc_user_artist_date_vec, get_pandas_usd_obj, _calc_all_artists_plays
+from utils.file_utils import load_csv_as_dict
+from utils.log_tool import model_logger
 
 __author__ = 'jayvee'
 
