@@ -30,10 +30,10 @@ def normalize_max_min(df, col_name, replace=0):
     Returns:
         df: pandas.dataFrame
     '''
-    mean_num = pd[column].mean()
-    min_num = pd[column].min()
-    max_num = mean_num + 2 * pd[column].std()
-    col_normalized = (pd[column] - min_num) / (max_num - min_num) 
+    mean_num = df[col_name].mean()
+    min_num = df[col_name].min()
+    max_num = mean_num + 2 * df[col_name].std()
+    col_normalized = (df[col_name] - min_num) / (max_num - min_num) 
     if replace:
         col_name_normalized = col_name
     else:

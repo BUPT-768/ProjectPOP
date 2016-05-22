@@ -19,7 +19,10 @@ abs_father_path = os.path.dirname(abs_path)
 sys.path.append(abs_father_path)
 
 from utils.log_tool import feature_logger as logger
+from utils.basic_configs import TotalDays
+from utils.pandas_utils import normalize_max_min
 
+import numpy
 data_source_dir = '%s/data_source' % (abs_father_path)
 
 def user_analysis():
@@ -103,14 +106,11 @@ def user_song_analysis():
         info_dict['download_song_num'] = len(info_dict['download_song'])
         info_dict['favor_song_num'] = len(info_dict['favor_song'])
         song_id_list = [song_id for song_id in info_dict['song_id_list']]
-        top1,top2,top3,top4,top5 = _top5_language(song_id_list,song_dict)
+        top1,is_multi_language = _top5_language(song_id_list,song_dict)
 
         p1,p2,p3 = _gender_prob(song_id_list,song_dict)
         info_dict['top1_language'] = top1
-        info_dict['top2_language'] = top2
-        info_dict['top3_language'] = top3
-        info_dict['top4_language'] = top4
-        info_dict['top5_language'] = top5
+        info_dict['is_multi_language'] = is_multi_language
         info_dict['p1_gender'] = p1
         info_dict['p2_gender'] = p2
         info_dict['p3_gender'] = p3
@@ -137,28 +137,25 @@ def user_song_analysis():
     #step 3 输出
     fs = open('%s/feature/user_analysis.csv' % abs_father_path,'w' )
 
-    fs.write('用户id,用户行为数量,用户行为歌曲数,用户行为天数,用户行为间隔天数,用户播放次数,用户下载次数,用户收藏次数,用户播放天数,用户下载的天数,用户下载间隔天数,用户收藏的天数,用户收藏间隔天数,用户播放的歌曲数,用户下载的歌曲数,用户收藏的歌曲数,用户平均每天播放歌曲数,用户平均每天下载歌曲数,用户平均每天收藏歌曲书,用户平均每天播放次数,用户平均每天下载次数,用户平均每天收藏次数,top1_language,top2_language,top3_language,top4_language,top5_language,p1_gender,p2_gender,p3_gender\n')
+    fs.write('user_id,user_song_cnt,user_song_unique,user_days_cnt,user_action_cycle,user_play_cnt,user_download_cnt,user_collect_cnt,user_play_days,user_play_cycle,user_download_days,user_download_cycle,user_collect_days,user_collect_cycle,user_play_songs,user_download_songs,user_collect_songs,user_play_songs_daily,user_downlaod_songs_daily,user_collect_songs_daily,user_play_times_daily,user_download_times_daily,user_collect_times_daily,top1_language,is_multi_language,p1_gender,p2_gender,p3_gender\n')
     for user_id,info_dict in user_dict.iteritems():
-        fs.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (user_id,info_dict['song_num'],info_dict['song_num_uniq'],info_dict['song_days_num'],info_dict['song_interval_frequency'],info_dict['play_time'],info_dict['download_time'],info_dict['favor_time'],info_dict['play_day_num'],info_dict['play_interval_frequency'],info_dict['download_day_num'],info_dict['download_interval_frequency'],info_dict['favor_day_num'],info_dict['favor_interval_frequency'],info_dict['play_song_num'],info_dict['download_song_num'],info_dict['favor_song_num'],info_dict['average_day_play_song'],info_dict['average_day_download_song'],info_dict['average_day_favor_song'],info_dict['average_day_play_times'],info_dict['average_day_download_times'],info_dict['average_day_favor_times'],info_dict['top1_language'],info_dict['top2_language'],info_dict['top3_language'],info_dict['top4_language'],info_dict['top5_language'],info_dict['p1_gender'],info_dict['p2_gender'],info_dict['p3_gender']))
+        fs.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' % (user_id,info_dict['song_num'],info_dict['song_num_uniq'],info_dict['song_days_num'],info_dict['song_interval_frequency'],info_dict['play_time'],info_dict['download_time'],info_dict['favor_time'],info_dict['play_day_num'],info_dict['play_interval_frequency'],info_dict['download_day_num'],info_dict['download_interval_frequency'],info_dict['favor_day_num'],info_dict['favor_interval_frequency'],info_dict['play_song_num'],info_dict['download_song_num'],info_dict['favor_song_num'],info_dict['average_day_play_song'],info_dict['average_day_download_song'],info_dict['average_day_favor_song'],info_dict['average_day_play_times'],info_dict['average_day_download_times'],info_dict['average_day_favor_times'],info_dict['top1_language'],info_dict['is_multi_language'],info_dict['p1_gender'],info_dict['p2_gender'],info_dict['p3_gender']))
     fs.close()
     logger.info('end write')
 
 def _top5_language(song_id_list,song_dict):
+    if len(song_id_list) == 0:
+        return (-1,0)
+    is_multi_language = 0
     song_language_dict = defaultdict(lambda:0)
     top_5_language = []
     for song_id in song_id_list:
         language = song_dict[song_id]['Language']
         song_language_dict[language] += 1
     favor_language = sorted(song_language_dict.iteritems(),key = lambda d:d[1],reverse = True)
-    if len(favor_language) >= 5:
-        favor_language = favor_language[0:5]
-    for l in favor_language:
-        top_5_language.append(l[0])
-    #补充不足top5的情况，用-1增加
-    if len(top_5_language) < 5:
-        for i in range((5 - len(top_5_language))):
-            top_5_language.append(-1)
-    return top_5_language    
+    if len(favor_language) >= 2:
+        is_multi_language = 1
+    return (favor_language[0][0],is_multi_language)    
     
 def _gender_prob(song_id_list,song_dict):
    #统计个数
@@ -176,12 +173,12 @@ def _gender_prob(song_id_list,song_dict):
 def _cal_song_interval_frequency(song_date_list):
     song_date_list = list(song_date_list)
    # sorted(song_date_list)
-    song_date_list.sort()
-    logger.info('the sorted list %s' % song_date_list)
+#    logger.info('the sorted list %s' % song_date_list)
     if len(song_date_list) == 0:
         return -1
     elif len(song_date_list) == 1:
         return 1
+    song_date_list.sort()
     date_interval_list = []    
     start_date = song_date_list[0]
     for i in range(1,len(song_date_list)):
@@ -194,11 +191,44 @@ def _cal_song_interval_frequency(song_date_list):
     for interval in date_interval_list:
         sum_num += interval
     mean_interval = sum_num / len(date_interval_list)
-   # if mean_interval < 0:
-   #     logger.info('the error list %s ' % song_date_list)
+    if mean_interval < 0:
+        logger.info('the error list %s ' % song_date_list)
     return mean_interval
 
-if __name__ == '__main__':
-    user_song_analysis()
+def preprocess_feature(source_file,otput_file ):
+    '''
+    数据预处理，主要包括归一化和特征选择
 
+    Args:
+        source_file: string
+        output_file: string
+    Returns:
+        output_file
+    '''
+    logger.info('Start preprocess_feature')
+    df = pandas.read_csv(source_file)
+
+    #数值型 归一化
+    for col_name in ['user_play_cnt','user_play_cycle','user_play_songs','user_play_songs_daily','user_play_times_daily']:
+        df = normalize_max_min(df,col_name,1)
+    #日期型 归一化
+ #   df = df['user_play_days'] / TotalDays
+    
+    df = df['user_play_days'] /  TotalDays
+    #特征选择
+    df_select = df[['user_id','user_play_cnt','user_play_days','user_play_cycle','user_play_songs','user_play_songs_daily','user_play_times_daily','top1_language','is_multi_language','p1_gender','p2_gender','p3_gender']]
+    df_select.to_csv(output_file,mode= 'w' ,index = False)
+    logger.info('Success preProcess ,store in %s' % (output_file))
+    return output_file
+
+def _one_hot(top1_language):
+    language_vec = [0] * 100 
+
+
+if __name__ == '__main__':
+  #  user_song_analysis()
+   source_file = '%s/feature/user_analysis.csv' % (abs_father_path)
+   output_file = source_file.replace('user_analysis','user_analysis_normalize')
+   preprocess_feature(source_file,output_file) 
+    
 

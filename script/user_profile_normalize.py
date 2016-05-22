@@ -59,12 +59,12 @@ def normalize_date_type(pd,column):
 
 def normalize():
     df = generate_obj_df()
-    for column in df.columns:
-        if '天数' in column:
-            logger.info('date type data')
+    for column in df[list(range(0,23))].columns:
+        if 'days' in column:
+           # logger.info('date type : %s ' % column)
             normalize_date_type(df,column)
-        elif '数量' in column:
-            logger.info('%s column' % column)
+        else:
+          #  logger.info('num type: %s column' % column)
             normalize_num_type(df,column)
     ## 写归一化的数据
     df.to_csv('%s/feature/user_profile_normalize.csv' % abs_father_path)

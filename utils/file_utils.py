@@ -1,5 +1,6 @@
 # coding=utf-8
 from basic_configs import PROJECT_PATH
+import pandas as pd
 
 __author__ = 'jayvee', 'jiaying.lu'
 
@@ -63,6 +64,17 @@ def get_user_profile_dict():
         user_profile_dict: dict, e.g. {uid1: {'key1':xx, 'key2':xx}, uid2: {}}
     '''
     user_profile_dict = {}
+    with open('%s/feature/user_analysis_normalize.csv' % (PROJECT_PATH)) as fopen:
+        fopen.readline()
+        for line in fopen:
+            line_list = line.strip().split(',')
+            user_id = line_list[0]
+            user_profile_dict[user_id] = {}
+            for i, key in enumerate(['user_play_cnt','user_play_days','user_play_cycle','user_play_songs','user_play_songs_daily','user_play_songs_daily','user_play_times_daily','top1_language','is_multi_language','p1_gender','p2_gender','p3_gender']):
+                if key == 'top1_language':
+                    continue
+                user_profile_dict[user_id][key] = line_list[i+1]
+                
     return user_profile_dict
 
 def get_artist_profile_dict():
@@ -73,8 +85,14 @@ def get_artist_profile_dict():
         artist_profile_dict: dict, e.g. {uid1: {'key1':xx, 'key2':xx}, uid2: {}}
     '''
     artist_profile_dict = {}
-    with open('%s/feature/artist_profile.csv') as fopen:
-        fopen.read()
+    with open('%s/feature/artist_profile_normalized.csv' % (PROJECT_PATH)) as fopen:
+        fopen.readline()
+        for line in fopen:
+            line_list = line.strip().split(',')
+            artist_id = line_list[0]
+            artist_profile_dict[artist_id] = {}
+            for i, key in enumerate(['gender','favor_language','is_multi_language','song_num_normalized','avg_publish_cycle_normalized','avg_song_init_plays_normalized','play_pv_daily_normalized','play_uv_daily_normalized','play_song_cnt_rate_daily']):
+                artist_profile_dict[artist_id][key] = line_list[i+1]
     return artist_profile_dict
 
 

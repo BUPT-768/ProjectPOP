@@ -4,7 +4,7 @@ Generate artist profile
 
 Author: lujiaying
 CreateDate: 2016/05/12
-UpdateDate: 2016/05/19
+UpdateDate: 2016/05/22
 '''
 from __future__ import division
 import os
@@ -18,6 +18,7 @@ sys.path.append(abs_father_path)
 from utils.log_tool import feature_logger as logger
 from utils.file_utils import get_song_artist_map
 from utils.basic_configs import ActionMap, TotalDays
+from utils.pandas_utils import normalize_max_min
 
 data_source_dir = '%s/data_source' % (abs_father_path)
 
@@ -38,14 +39,14 @@ def process_artist_songs(artist_dict={}):
             line_list = line.strip().split(',')
             artist_id, publish_time, song_init_plays, language, gender = line_list[1], line_list[2], line_list[3], line_list[4], line_list[5]
             if artist_id not in artist_dict:
-                artist_dict[artist_id] = {'song_num':0, 'publish_time_list':[], 'song_init_plays_sum':0, 'l0':0, 'l1':0, 'l2':0, 'l3':0, 'l4':0, 'l5':0, 'gender':gender}
+                artist_dict[artist_id] = {'song_num':0, 'publish_time_list':[], 'song_init_plays_sum':0, 'gender':gender}
+                for i in range(101):
+                    l_key = 'l%s' % (i)
+                    artist_dict[artist_id][l_key] = 0
             artist_dict[artist_id]['song_num'] += 1
             artist_dict[artist_id]['publish_time_list'].append(publish_time)
             artist_dict[artist_id]['song_init_plays_sum'] += int(song_init_plays)
-            if int(language) < 5:
-                l_key = 'l%s' % (language)
-            else:
-                l_key = 'l5'
+            l_key = 'l%s' % (language)
             artist_dict[artist_id][l_key] += 1
 
     ## step 2 计算
@@ -63,12 +64,18 @@ def process_artist_songs(artist_dict={}):
             end_day_datetime = datetime.datetime.strptime(str(end_day), '%Y%m%d')
             info_dict['avg_publish_cycle'] = (end_day_datetime - start_day_datetime).days / info_dict['song_num']
         ### 统计歌曲语言占比
-        info_dict['l0_rate'] = info_dict['l0'] / info_dict['song_num']
-        info_dict['l1_rate'] = info_dict['l1'] / info_dict['song_num']
-        info_dict['l2_rate'] = info_dict['l2'] / info_dict['song_num']
-        info_dict['l3_rate'] = info_dict['l3'] / info_dict['song_num']
-        info_dict['l4_rate'] = info_dict['l4'] / info_dict['song_num']
-        info_dict['l5_rate'] = info_dict['l5'] / info_dict['song_num']
+        max_language, max_language_song_cnt = '0', 0
+        language_cnt = 0
+        for i in range(101):
+            l_key = 'l%s' % (i)
+            info_dict['l%s_rate'%(i)] = info_dict[l_key] / info_dict['song_num']
+            if info_dict[l_key] > max_language_song_cnt:
+                max_language_song_cnt = info_dict[l_key]
+                max_language = str(i) 
+            if info_dict[l_key] > 0:
+                language_cnt += 1
+        info_dict['favor_language'] = l_key
+        info_dict['is_multi_language'] = 1 if language_cnt else 0
     return artist_dict
 
 
@@ -158,19 +165,46 @@ def output(artist_dict, output_path):
         output_path: string
     '''
     logger.info('Start output')
-    col_names = ['song_num', 'avg_publish_cycle', 'avg_song_init_plays', 'l0', 'l1', 'l2', 'l3', 'l4', 'l5', 'l0_rate', 'l1_rate', 'l2_rate', 'l3_rate', 'l4_rate', 'l5_rate', 'gender',
+    col_names = ['song_num', 'avg_publish_cycle', 'avg_song_init_plays', 'favor_language', 'is_multi_language', 'gender',
                  'play_pv', 'download_pv', 'collect_pv', 'play_uv', 'download_uv', 'collect_uv', 'play_song_cnt', 'download_song_cnt', 'collect_song_cnt',
                  'play_pv_daily', 'download_pv_daily', 'collect_pv_daily', 'play_uv_daily', 'download_uv_daily', 'collect_uv_daily', 'play_song_cnt_daily', 'download_song_cnt_daily', 'collect_song_cnt_daily',
                  'day_actioned', 'day_actioned_rate', 'play_song_cnt_rate_daily', 'download_song_cnt_rate_daily', 'collect_song_cnt_rate_daily']
+    for i in range(101):
+        col_names.append('l%s' % (i))
+        col_names.append('l%s_rate' % (i))
     with open(output_path, 'w') as fopen:
-        fopen.write(','.join(col_names) + '\n')
+        fopen.write('artist_id,' + ','.join(col_names) + '\n')
         for artist_id, info_dict in artist_dict.iteritems():
             out_line = [artist_id]
             for col in col_names:
                 out_line.append(str(info_dict[col]))
             fopen.write(','.join(out_line) + '\n')
-    logger.info('End output')
+    logger.info('End output, store in %s' % (output_path))
     return output_path
+
+def preprocess_feature(source_file, output_file):
+    '''
+    数据预处理，主要包括归一化 和 特征选择
+
+    Args:
+        source_file: string
+        output_file: string
+
+    Returns:
+        output_file
+    '''
+    logger.info('Start preprocess_feature')
+    df = pandas.read_csv(source_file)
+    # 归一化
+    for col_name in ['song_num', 'avg_publish_cycle', 'avg_song_init_plays', 'play_pv_daily', 'play_uv_daily']:
+        df = normalize_max_min(df, col_name)
+
+    # 特征选择
+    df_select = df[['artist_id', 'gender', 'favor_language', 'is_multi_language', 'song_num_normalized', 'avg_publish_cycle_normalized', 'avg_song_init_plays_normalized', 'play_pv_daily_normalized', 'play_uv_daily_normalized', 'play_song_cnt_rate_daily']]
+    #logger.info(df_select.columns)
+    df_select.to_csv(output_file, index=False)
+    logger.info('Success preprocess_feature, store in %s' % (output_file))
+    return output_file
 
 
 def main():
@@ -179,6 +213,9 @@ def main():
     artist_dict = process_artist_songs()
     artist_dict = process_user_actions(artist_dict)
     output(artist_dict, out_file)
+
+    # 对原始特征离散化
+    preprocess_feature(out_file, out_file.replace('artist_profile', 'artist_profile_normalized'))
     
 
 if __name__ == '__main__':
