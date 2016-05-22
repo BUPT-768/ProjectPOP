@@ -3,6 +3,7 @@ import datetime
 import pandas as pd
 import os
 import sys
+from utils.log_tool import feature_logger
 
 project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_path)
@@ -142,12 +143,16 @@ def _calc_artist_plays(artist_id, date_str, df, day_offset=1):
     cur_datetime = str2datetime(date_str)
     start_datetime = str2datetime(date_str) - datetime.timedelta(days=day_offset)
     # handle day plays
+    t = datetime.datetime.utcnow()
+    feature_logger.info('start df')
     aid_records = df[
         (df.artist_id == artist_id) &
         (df.datetime > start_datetime) & (df.datetime < cur_datetime)]
     aid_plays = 0.0
+    feature_logger.info('start for')
     for play in aid_records.plays:
         aid_plays += play
+    feature_logger.info('end df')
     return aid_plays
 
 

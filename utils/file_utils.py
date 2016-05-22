@@ -12,6 +12,7 @@ def load_csv_as_dict(csv_path):
     """
     with open(csv_path, 'r') as fin:
         first_line = next(fin)
+        first_line = first_line.replace(' ', '')
         titles = first_line.strip().split(',')
         datas = []
         for line in fin:
@@ -37,6 +38,7 @@ def get_song_artist_map():
             song_id, artist_id = line_list[0], line_list[1]
             song_artist_map[song_id] = artist_id
     return song_artist_map
+
 
 def get_all_artist_id():
     '''
