@@ -55,6 +55,28 @@ def get_all_artist_id():
                 artist_set.add(artist_id)
     return artist_set
 
+def get_user_profile_dict():
+    '''
+    获得用户画像的dict
+
+    Returns:
+        user_profile_dict: dict, e.g. {uid1: {'key1':xx, 'key2':xx}, uid2: {}}
+    '''
+    user_profile_dict = {}
+    return user_profile_dict
+
+def get_artist_profile_dict():
+    '''
+    获得艺人画像的dict
+
+    Returns:
+        artist_profile_dict: dict, e.g. {uid1: {'key1':xx, 'key2':xx}, uid2: {}}
+    '''
+    artist_profile_dict = {}
+    with open('%s/feature/artist_profile.csv') as fopen:
+        fopen.read()
+    return artist_profile_dict
+
 
 def test_main():
     res = load_csv_as_dict('%s/data_source/%s' % (PROJECT_PATH, 'mars_tianchi_songs.csv'))
