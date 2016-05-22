@@ -64,7 +64,7 @@ def generate_label(source_file, output_dir):
             os.makedirs(cur_dir)
         cur_file = '%s/train_label.csv' % (cur_dir)
         with open(cur_file, 'w') as fopen:
-            fopen.write('user_id, artist_id, date, label\n')
+            fopen.write('user_id,artist_id,date,label\n')
             for cur_line in output_result:
                 fopen.write(','.join(cur_line) + '\n')
         logger.info('Current stage: %s user output success, store in %s' % (date, cur_file))
