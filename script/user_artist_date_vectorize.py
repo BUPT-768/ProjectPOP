@@ -5,7 +5,6 @@ import os
 import sys
 
 project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# print project_path
 sys.path.append(project_path)
 
 from utils.basic_configs import timer
@@ -31,12 +30,12 @@ def get_pandas_usd_obj(user_artist_daily_path='%s/feature/user_artist_daily_stat
 
 def calc_user_artist_date_vec(user_id, artist_id, date_str, df, **tmp_dict):
     """
-    The main function to calculate user-song-date vector, contains some sub-functions.
+    The main function to calculate single user-song-date vector, contains some sub-functions.
     :param user_id:
     :param artist_id:
     :param date_str:
     :param df: pandas global DataFrame object
-    :return:
+    :return: features dict, e.g.{'key1':value1,'key2':value2,....}
     """
     # --- numercial features ---
     # user-song
@@ -74,13 +73,18 @@ def calc_user_artist_date_vec(user_id, artist_id, date_str, df, **tmp_dict):
     # --- binary features ---
     is_download = _calc_is_download(user_id, artist_id, date_str, df)
     is_collect = _calc_is_collect(user_id, artist_id, date_str, df)
-    return one_u_a_plays, three_u_a_plays, seven_u_a_plays, \
-           one_u_plays, three_u_plays, seven_u_plays, \
-           one_a_plays, three_a_plays, seven_a_plays, \
-           one_a_pop_rate, three_a_pop_rate, seven_a_pop_rate, \
-           one_u_a_plays_days, three_u_a_plays_days, seven_u_a_plays_days, \
-           one_u_a_play_rate, three_u_a_play_rate, seven_u_a_play_rate, \
-           is_download, is_collect
+    res_dict = {'one_u_a_plays': one_u_a_plays, 'three_u_a_plays': three_u_a_plays, 'seven_u_a_plays': seven_u_a_plays,
+                'one_u_plays': one_u_plays, 'three_u_plays': three_u_plays, 'seven_u_plays': seven_u_plays,
+                'one_a_plays': one_a_plays, 'three_a_plays': three_a_plays, 'seven_a_plays': seven_a_plays,
+                'one_a_pop_rate': one_a_pop_rate, 'three_a_pop_rate': three_a_pop_rate,
+                'seven_a_pop_rate': seven_a_pop_rate,
+                'one_u_a_plays_days': one_u_a_plays_days, 'three_u_a_plays_days': three_u_a_plays_days,
+                'seven_u_a_plays_days': seven_u_a_plays_days,
+                'one_u_a_play_rate': one_u_a_play_rate, 'three_u_a_play_rate': three_u_a_play_rate,
+                'seven_u_a_play_rate': seven_u_a_play_rate,
+                'is_download': is_download, 'is_collect': is_collect
+                }
+    return res_dict
 
 
 def _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=1):
@@ -219,7 +223,7 @@ def _calc_is_download(user_id, artist_id, date_str, df):
     cur_datetime = str2datetime(date_str)
     uid_aid_records = df[(df.user_id == user_id) & (df.artist_id == artist_id)
                          & (df.datetime < cur_datetime) & (df.downloads > 0)]
-    return 1 if len(uid_aid_records) > 0 else 0
+    return 1.0 if len(uid_aid_records) > 0 else 0.0
 
 
 def _calc_is_collect(user_id, artist_id, date_str, df):
@@ -234,7 +238,7 @@ def _calc_is_collect(user_id, artist_id, date_str, df):
     cur_datetime = str2datetime(date_str)
     uid_aid_records = df[(df.user_id == user_id) & (df.artist_id == artist_id)
                          & (df.datetime < cur_datetime) & (df.collects > 0)]
-    return 1 if len(uid_aid_records) > 0 else 0
+    return 1.0 if len(uid_aid_records) > 0 else 0.0
 
 
 def get_vectors_batch(paras_tuples, user_artist_daily_df):
