@@ -214,7 +214,7 @@ def preprocess_feature(source_file,otput_file ):
     #日期型 归一化
  #   df = df['user_play_days'] / TotalDays
     
-    df = df['user_play_days'] /  TotalDays
+    df['user_play_days'] =  df['user_play_days'] /  TotalDays
     #特征选择
     df_select = df[['user_id','user_play_cnt','user_play_days','user_play_cycle','user_play_songs','user_play_songs_daily','user_play_times_daily','top1_language','is_multi_language','p1_gender','p2_gender','p3_gender']]
     df_select.to_csv(output_file,mode= 'w' ,index = False)
