@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-生成标签，key为<uid,artist_id,date>
+生成标签，key为<uid,artist_id,date>, 按日期分文件存储
 
 Author: lujiaying
 CreateDate: 2016/05/21
@@ -21,16 +21,16 @@ from utils.basic_configs import ActionMap, TotalDays, PositiveLabel, NegativeLab
 data_source_dir = '%s/data_source' % (abs_father_path)
 feature_dir = '%s/feature' % (abs_father_path)
 
-def generate_label(source_file, output_file):
+def generate_label(source_file, output_dir):
     '''
     生成标签文件
 
     Args:
         source_file: string
-        output_file: string
+        output_dir: string
     '''
     logger.info('Enter generate_label')
-    user_dict = {}   # e.g. {uid:{date1:artist_id_set(), date2:artist_id_set()}}
+    date_dict = {}   # e.g. {date1:{uid1:artist_id_set(), uid2:artist_id_set()}, date2:{}}
     song_artist_map = get_song_artist_map()
 
     # step 1: read raw data
@@ -41,37 +41,39 @@ def generate_label(source_file, output_file):
             artist_id = song_artist_map[song_id]
             action = ActionMap[action_type]
             if action == 'play':
-                if user_id not in user_dict:
-                    user_dict[user_id] = {}
-                if Ds not in user_dict[user_id]:
-                    user_dict[user_id][Ds] = set()
-                user_dict[user_id][Ds].add(artist_id)
+                if Ds not in date_dict:
+                    date_dict[Ds] = {}
+                if user_id not in date_dict[Ds]:
+                    date_dict[Ds][user_id] = set()
+                date_dict[Ds][user_id].add(artist_id)
 
-    # step 2: generate label
+    # step 2: generate label && output
     logger.info('Start step 2: generate label')
-    user_cnt = 0
-    output_result = []  # e.g. [[uid, aid, date, label], []]
     artist_id_set = get_all_artist_id()
-    for user_id, info_dict in user_dict.iteritems():
-        if user_cnt % 100000 == 0:
-            logger.info('current stage: #%s user finished generate label' % (user_cnt))
-        user_cnt += 1
-        for date, positive_artist_id_set in info_dict.iteritems():
+    for date, info_dict in date_dict.iteritems():
+        logger.info('Current stage: %s user start generate labels' % (date))
+        output_result = []  # e.g. [[uid, aid, date, label], []]
+        for user_id, positive_artist_id_set in info_dict.iteritems():
             for artist_id in positive_artist_id_set:
-                output_result.append([user_id, artist_id, date, PositiveLabel])
+                output_result.append([str(user_id), str(artist_id), str(date), str(PositiveLabel)])
             for artist_id in (artist_id_set - positive_artist_id_set):
-                output_result.append([user_id, artist_id, date, NegativeLabel])
+                output_result.append([str(user_id), str(artist_id), str(date), str(NegativeLabel)])
+        logger.info('Current stage: %s user start output to file' % (date))
+        cur_dir = '%s/%s' % (output_dir, date)
+        if not os.path.exists(cur_dir):
+            os.makedirs(cur_dir)
+        cur_file = '%s/train_label.csv' % (cur_dir)
+        with open(cur_file, 'w') as fopen:
+            fopen.write('user_id, artist_id, date, label\n')
+            for cur_line in output_result:
+                fopen.write(','.join(cur_line) + '\n')
+        logger.info('Current stage: %s user output success, store in %s' % (date, cur_file))
 
-    # step 3: output result
-    logger.info('Start output')
-    with open(output_file, 'w') as fopen:
-        fopen.write('user_id, artist_id, date, label\n')
-        for cur_line in output_result:
-            fopen.write(','.join(cur_line) + '\n')
-            
     logger.info('End generate_label')
+    return True
+
 
 if __name__ == '__main__':
     source_file = '%s/mars_tianchi_user_actions.csv' % (data_source_dir)
-    output_file = '%s/train_label.csv' % (feature_dir)
-    generate_label(source_file, output_file)
+    output_dir = '%s/dailyFeature' % (feature_dir)
+    generate_label(source_file, output_dir)

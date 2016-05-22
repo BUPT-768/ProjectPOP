@@ -68,3 +68,4 @@ target/
 
 # Project
 log/
+nohup.out
