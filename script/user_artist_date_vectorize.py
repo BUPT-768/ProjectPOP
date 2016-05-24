@@ -3,16 +3,20 @@ import datetime
 import pandas as pd
 import os
 import sys
-from utils.log_tool import feature_logger
 
 project_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_path)
 
 from utils.basic_configs import timer
 from utils.pandas_utils import str2datetime
+from utils.log_tool import feature_logger
 
 __author__ = 'jayvee'
 
+# global 
+Uid_aid_date_dict = {}
+Uid_date_dict = {}
+Aid_date_dict = {}
 
 @timer
 def get_pandas_usd_obj(user_artist_daily_path='%s/feature/user_artist_daily_stat.csv' % project_path):
@@ -38,17 +42,22 @@ def calc_user_artist_date_vec(user_id, artist_id, date_str, df, **tmp_dict):
     :param df: pandas global DataFrame object
     :return: features dict, e.g.{'key1':value1,'key2':value2,....}
     """
-    # --- numercial features ---
+    feature_logger.info('Enter calc_user_artist_date_vec')
+        # --- numercial features ---
     # user-song
     # ——近期指定用户播放指定艺人的次数
+    feature_logger.info('start cal recent uid, aid, date_str , plays')
     one_u_a_plays = _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=1)
     three_u_a_plays = _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=3)
     seven_u_a_plays = _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=7)
+    feature_logger.info('End cal recent uid, aid, date_str , plays')
     # user
     # ——近期指定用户的播放总数
+    feature_logger.info('start cal recent uid, date_str , plays')
     one_u_plays = _calc_user_plays(user_id, date_str, df, day_offset=1)
     three_u_plays = _calc_user_plays(user_id, date_str, df, day_offset=3)
     seven_u_plays = _calc_user_plays(user_id, date_str, df, day_offset=7)
+    feature_logger.info('end cal recent uid, date_str , plays')
     # artist
     # ——指定艺人近期被播放的次数
     one_a_plays = _calc_artist_plays(artist_id, date_str, df, day_offset=1)
@@ -88,6 +97,48 @@ def calc_user_artist_date_vec(user_id, artist_id, date_str, df, **tmp_dict):
     return res_dict
 
 
+def _get_uid_aid_records_plays(user_id, artist_id, start_datetime, end_datetime):
+    '''
+    :param user_id:
+    :param artist_id:
+    :param date_str:
+    :return: plays: float
+    '''
+    global Uid_aid_date_dict
+    plays = 0.0
+    for cur_datetime, action_dict in Uid_aid_date_dict[user_id][artist_id].iteritems():
+        #feature_logger.debug('cur_datetime:%s, user_id:%s, artist_id:%s' % (cur_datetime, user_id, artist_id))
+        if cur_datetime >= start_datetime and cur_datetime < end_datetime:
+            plays += action_dict['plays']
+    return plays
+
+def _get_uid_records_plays(user_id, start_datetime, end_datetime):
+    '''
+    :param user_id:
+    :param date_str:
+    :return: plays: float
+    '''
+    global Uid_date_dict
+    plays = 0.0
+    for cur_datetime, action_dict in Uid_date_dict[user_id].iteritems():
+        if cur_datetime >= start_datetime and cur_datetime < end_datetime:
+            plays += action_dict['plays']
+    return plays
+
+def _get_aid_records_plays(artist_id, start_datetime, end_datetime):
+    '''
+    :param artist_id:
+    :param date_str:
+    :return: plays: float
+    '''
+    global Aid_date_dict
+    plays = 0.0
+    for cur_datetime, action_dict in Aid_date_dict[artist_id].iteritems():
+        if cur_datetime >= start_datetime and cur_datetime < end_datetime:
+            plays += action_dict['plays']
+    return plays
+
+
 def _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=1):
     """
     calc user-song-date-dayoffset plays
@@ -100,13 +151,18 @@ def _calc_user_artist_plays(user_id, artist_id, date_str, df, day_offset=1):
     """
     cur_datetime = str2datetime(date_str)
     start_datetime = str2datetime(date_str) - datetime.timedelta(days=day_offset)
+    '''
     # handle day plays
     uid_aid_records = df[
         (df.user_id == user_id) & (df.artist_id == artist_id) &
         (df.datetime >= start_datetime) & (df.datetime < cur_datetime)]
+
     uid_aid_plays = 0.0
     for play in uid_aid_records.plays:
         uid_aid_plays += play
+    '''
+    # new process to handle day plays
+    uid_aid_plays = _get_uid_aid_records_plays(user_id, artist_id, start_datetime, cur_datetime)
     return uid_aid_plays
 
 
@@ -121,6 +177,7 @@ def _calc_user_plays(user_id, date_str, df, day_offset=1):
     """
     cur_datetime = str2datetime(date_str)
     start_datetime = str2datetime(date_str) - datetime.timedelta(days=day_offset)
+    '''
     # handle day plays
     uid_records = df[
         (df.user_id == user_id) &
@@ -128,6 +185,9 @@ def _calc_user_plays(user_id, date_str, df, day_offset=1):
     uid_plays = 0.0
     for play in uid_records.plays:
         uid_plays += play
+    '''
+    # new process handle day plays
+    uid_plays = _get_uid_records_plays(user_id, start_datetime, cur_datetime)
     return uid_plays
 
 
@@ -142,8 +202,8 @@ def _calc_artist_plays(artist_id, date_str, df, day_offset=1):
     """
     cur_datetime = str2datetime(date_str)
     start_datetime = str2datetime(date_str) - datetime.timedelta(days=day_offset)
+    '''
     # handle day plays
-    t = datetime.datetime.utcnow()
     # feature_logger.info('start df')
     aid_records = df[
         (df.artist_id == artist_id) &
@@ -153,6 +213,11 @@ def _calc_artist_plays(artist_id, date_str, df, day_offset=1):
     for play in aid_records.plays:
         aid_plays += play
     # feature_logger.info('end df')
+    '''
+    # new process handle day plays
+    #feature_logger.info('start _get_records')
+    aid_plays = _get_aid_records_plays(artist_id, start_datetime, cur_datetime)
+    #feature_logger.info('end _get_records')
     return aid_plays
 
 
@@ -209,11 +274,18 @@ def _calc_user_artist_plays_days(user_id, artist_id, date_str, df, day_offset=1)
     """
     cur_datetime = str2datetime(date_str)
     start_datetime = str2datetime(date_str) - datetime.timedelta(days=day_offset)
+    '''
     # handle day plays
     uid_aid_records = df[(df.plays > 0) &
                          (df.user_id == user_id) & (df.artist_id == artist_id) &
                          (df.datetime >= start_datetime) & (df.datetime < cur_datetime)]
-    return float(len(uid_aid_records))
+    '''
+    days = 0
+    for key_datetime, action_dict in Uid_aid_date_dict[user_id][artist_id].iteritems():
+        if key_datetime >= start_datetime and key_datetime < cur_datetime:
+            if action_dict['plays'] > 0:
+                days += 1
+    return float(days)
 
 
 def _calc_is_download(user_id, artist_id, date_str, df):
@@ -245,6 +317,47 @@ def _calc_is_collect(user_id, artist_id, date_str, df):
                          & (df.datetime < cur_datetime) & (df.collects > 0)]
     return 1.0 if len(uid_aid_records) > 0 else 0.0
 
+def _load_file_to_dict():
+    """
+    读取原始的csv数据文件，输出dict
+    """
+    global Uid_aid_date_dict
+    global Uid_date_dict
+    global Aid_date_dict
+    with open('%s/feature/user_artist_daily_stat.csv' % (project_path)) as fin:
+        fin.readline()
+        line_cnt = 0
+        for line in fin:
+            line_cnt += 1
+            if line_cnt % 100000 == 0:
+                feature_logger.info('_load_file_to_dict current stage: %s line' % (line_cnt))
+            user_id,artist_id,date_str,plays,downloads,collects = line.strip().split(',')
+            Ds_datetime = str2datetime(date_str)
+            # Uid_aid_date_dict generate
+            if user_id not in Uid_aid_date_dict:
+                Uid_aid_date_dict[user_id] = {}
+            if artist_id not in Uid_aid_date_dict[user_id]:
+                Uid_aid_date_dict[user_id][artist_id] = {}
+            if Ds_datetime not in Uid_aid_date_dict[user_id][artist_id]:
+                Uid_aid_date_dict[user_id][artist_id][Ds_datetime] = {}
+            Uid_aid_date_dict[user_id][artist_id][Ds_datetime] = {'plays':eval(plays), 'downloads':eval(downloads), 'collects':eval(collects)}
+
+            # Uid_date_dict generate
+            if user_id not in Uid_date_dict:
+                Uid_date_dict[user_id] = {}
+            if Ds_datetime not in Uid_date_dict[user_id]:
+                Uid_date_dict[user_id][Ds_datetime] = {}
+            Uid_date_dict[user_id][Ds_datetime] = {'plays':eval(plays), 'downloads':eval(downloads), 'collects':eval(collects)}
+
+            # Aid_date_dict generate
+            if artist_id not in Aid_date_dict:
+                Aid_date_dict[artist_id] = {}
+            if Ds_datetime not in Aid_date_dict[artist_id]:
+                Aid_date_dict[artist_id][Ds_datetime] = {}
+            Aid_date_dict[artist_id][Ds_datetime] = {'plays':eval(plays), 'downloads':eval(downloads), 'collects':eval(collects)}
+    feature_logger.info('Uid_aid_date_dict len=%s' % (len(Uid_aid_date_dict)))
+    return
+
 
 def get_vectors_batch(paras_tuples, user_artist_daily_df):
     """
@@ -254,8 +367,10 @@ def get_vectors_batch(paras_tuples, user_artist_daily_df):
            pandas DataFrame(由get_pandas_usd_obj()读取)
     :return:
     """
+    # generate a dict
     for user_id, artist_id, date_str in paras_tuples:
         yield calc_user_artist_date_vec(user_id, artist_id, date_str, user_artist_daily_df)
+
 
 
 if __name__ == '__main__':

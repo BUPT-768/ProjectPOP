@@ -6,7 +6,7 @@ cur_path = os.path.dirname(os.path.abspath(__file__))
 project_path = os.path.dirname(os.path.dirname(cur_path))
 sys.path.append(project_path)
 
-from script.user_artist_date_vectorize import calc_user_artist_date_vec, get_pandas_usd_obj, _calc_all_artists_plays
+from script.user_artist_date_vectorize import calc_user_artist_date_vec, get_pandas_usd_obj, _calc_all_artists_plays, _load_file_to_dict
 from utils.file_utils import load_csv_as_dict
 from utils.log_tool import model_logger
 
@@ -53,7 +53,7 @@ def get_vector_by_single_info(user_id, artist_id, date_str, dframe, **tmp_params
     recent_feature_dict = calc_user_artist_date_vec(user_id, artist_id, date_str, dframe, **tmp_params)
     # TODO user_profile
     user_profile_dict = {}
-    # todo artist profile
+    # TODO artist profile
     artist_profile_dict = {}
     try:
         recent_feature_vec = __dict2vec(recent_feature_dict)
@@ -76,6 +76,9 @@ def traversal_daily_labels():
 
     :return:
     """
+    # Global init
+    _load_file_to_dict()
+
     print project_path
     dframe = get_pandas_usd_obj()
     file_tree = os.walk('%s/feature/dailyFeature' % project_path)
